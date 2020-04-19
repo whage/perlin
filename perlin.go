@@ -60,13 +60,10 @@ func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]int {
 	return greyScalePixels
 }
 
-func CreatePPM(width, height int) {
+func CreatePPM(width, height, gridWidth, gridHeight int) {
 	fmt.Println("P3")
 	fmt.Printf("%d %d\n", width, height)
 	fmt.Println("255")
-
-	gridWidth := 4
-	gridHeight := 3
 
 	gridNodeVectors := make([][]Vec2D, gridWidth+1)
 
@@ -113,11 +110,10 @@ func CreatePPM(width, height int) {
 }
 
 func fillPoint(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
-	v := Vec2D{float64(x), float64(y)}
-	dotA := tl.dot(v)
-	dotB := tr.dot(v)
-	dotC := bl.dot(v)
-	dotD := br.dot(v)
+	dotA := tl.dot(Vec2D{float64(x), float64(y)})
+	dotB := tr.dot(Vec2D{float64(x-width), float64(y)})
+	dotC := bl.dot(Vec2D{float64(x), float64(y-height)})
+	dotD := br.dot(Vec2D{float64(x-width), float64(y-height)})
 
 	lerpTop := lerp(dotA, dotB, float64(x)/float64(width))
 	lerpBottom := lerp(dotC, dotD, float64(x)/float64(width))
