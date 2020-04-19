@@ -2,6 +2,7 @@ package perlin
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 )
@@ -18,21 +19,21 @@ func lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
-func fillGridCell(tl, tr, bl, br Vec2D, width, height int) [][]int {
+func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]int {
 	var min float64
 	var max float64
 
-	values := make([][]float64, height)
-	greyScalePixels := make([][]int, height)
+	values := make([][]float64, cellWidth)
+	greyScalePixels := make([][]int, cellWidth)
 
-	for i := 0; i < height; i++ {
-		values[i] = make([]float64, width)
-		greyScalePixels[i] = make([]int, width)
+	for i := 0; i < cellWidth; i++ {
+		values[i] = make([]float64, cellHeight)
+		greyScalePixels[i] = make([]int, cellHeight)
 	}
 
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			value := fillPoint(tl, tr, bl, br, width, height, x, y)
+	for y := 0; y < cellHeight; y++ {
+		for x := 0; x < cellWidth; x++ {
+			value := fillPoint(tl, tr, bl, br, cellWidth, cellHeight, x, y)
 			values[x][y] = value
 
 			if y == 0 && x == 0 {
@@ -50,8 +51,8 @@ func fillGridCell(tl, tr, bl, br Vec2D, width, height int) [][]int {
 
 	scaleFactor := 255 / (max-min)
 
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < cellHeight; y++ {
+		for x := 0; x < cellWidth; x++ {
 			greyScalePixels[x][y] = int((values[x][y] - min)*scaleFactor)
 		}
 	}
@@ -67,26 +68,27 @@ func CreatePPM(width, height int) {
 	gridWidth := 4
 	gridHeight := 3
 
-	gridNodeVectors := make([][]Vec2D, gridHeight+1)
+	gridNodeVectors := make([][]Vec2D, gridWidth+1)
 
-	for j := 0; j < gridHeight; j++ {
-		gridNodeVectors[j] = make([]Vec2D, gridWidth+1)
-		for i := 0; i < gridWidth; i++ {
-			gridNodeVectors[j][i] = Vec2D{rand.Float64(),rand.Float64()}
+	for i := 0; i <= gridWidth; i++ {
+		gridNodeVectors[i] = make([]Vec2D, gridHeight+1)
+		for j := 0; j <= gridHeight; j++ {
+			angle := rand.Float64() * math.Pi
+			gridNodeVectors[i][j] = Vec2D{math.Cos(angle),math.Sin(angle)}
 		}
 	}
 
-	pixelValues := make([][]string, height)
-	for j := 0; j < height; j++ {
-		pixelValues[j] = make([]string, width)
+	pixelValues := make([][]string, width)
+	for i := 0; i < width; i++ {
+		pixelValues[i] = make([]string, height)
 	}
 
-	for y := 0; y < gridHeight-1; y++ {
-		for x := 0; x < gridWidth-1; x++ {
-			tl := gridNodeVectors[y][x]
-			tr := gridNodeVectors[y][x+1]
-			bl := gridNodeVectors[y+1][x]
-			br := gridNodeVectors[y+1][x+1]
+	for y := 0; y < gridHeight; y++ {
+		for x := 0; x < gridWidth; x++ {
+			tl := gridNodeVectors[x][y]
+			tr := gridNodeVectors[x+1][y]
+			bl := gridNodeVectors[x][y+1]
+			br := gridNodeVectors[x+1][y+1]
 
 			cellWidth := width/gridWidth
 			cellHeight := height/gridHeight
@@ -104,7 +106,7 @@ func CreatePPM(width, height int) {
 	for j := 0; j < height; j++ {
 		var row []string
 		for i := 0; i < width; i++ {
-			row = append(row, pixelValues[j][i])
+			row = append(row, pixelValues[i][j])
 		}
 		fmt.Println(strings.Join(row, " "))
 	}
@@ -117,9 +119,9 @@ func fillPoint(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
 	dotC := bl.dot(v)
 	dotD := br.dot(v)
 
-	lerpTop := lerp(dotA, dotB, float64(x+1)/float64(width))
-	lerpBottom := lerp(dotC, dotD, float64(x+1)/float64(width))
+	lerpTop := lerp(dotA, dotB, float64(x)/float64(width))
+	lerpBottom := lerp(dotC, dotD, float64(x)/float64(width))
 
-	lerped := lerp(lerpTop, lerpBottom, float64(y+1)/float64(height))
+	lerped := lerp(lerpTop, lerpBottom, float64(y)/float64(height))
 	return lerped
 }
