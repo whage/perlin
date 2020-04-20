@@ -49,15 +49,18 @@ func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]int {
 		}
 	}
 
-	scaleFactor := 255 / (max-min)
-
 	for y := 0; y < cellHeight; y++ {
 		for x := 0; x < cellWidth; x++ {
-			greyScalePixels[x][y] = int((values[x][y] - min)*scaleFactor)
+			greyScalePixels[x][y] = scaleToRGBRange(values[x][y], min, max)
 		}
 	}
 
 	return greyScalePixels
+}
+
+func scaleToRGBRange(value, min, max float64) int {
+	scaleFactor := 255 / (max-min)
+	return int((value-min) * scaleFactor)
 }
 
 func CreatePPM(width, height, gridWidth, gridHeight int) {
