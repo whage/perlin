@@ -73,8 +73,8 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 	for i := 0; i <= gridWidth; i++ {
 		gridNodeVectors[i] = make([]Vec2D, gridHeight+1)
 		for j := 0; j <= gridHeight; j++ {
-			angle := rand.Float64() * math.Pi
-			gridNodeVectors[i][j] = Vec2D{math.Cos(angle),math.Sin(angle)}
+			angle := rand.Float64() * 2 * math.Pi
+			gridNodeVectors[i][j] = Vec2D{math.Cos(angle), math.Sin(angle)}
 		}
 	}
 
