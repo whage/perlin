@@ -19,43 +19,21 @@ func lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
-func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]int {
-	var min float64
-	var max float64
-
+func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]float64 {
 	values := make([][]float64, cellWidth)
-	greyScalePixels := make([][]int, cellWidth)
 
 	for i := 0; i < cellWidth; i++ {
 		values[i] = make([]float64, cellHeight)
-		greyScalePixels[i] = make([]int, cellHeight)
 	}
 
 	for y := 0; y < cellHeight; y++ {
 		for x := 0; x < cellWidth; x++ {
-			value := fillPoint(tl, tr, bl, br, cellWidth, cellHeight, x, y)
+			value := bilinear(tl, tr, bl, br, cellWidth, cellHeight, x, y)
 			values[x][y] = value
-
-			if y == 0 && x == 0 {
-				min, max = value, value
-			} else {
-				if value < min {
-					min = value
-				}
-				if value > max {
-					max = value
-				}
-			}
 		}
 	}
 
-	for y := 0; y < cellHeight; y++ {
-		for x := 0; x < cellWidth; x++ {
-			greyScalePixels[x][y] = scaleToRGBRange(values[x][y], min, max)
-		}
-	}
-
-	return greyScalePixels
+	return values
 }
 
 func scaleToRGBRange(value, min, max float64) int {
@@ -63,11 +41,7 @@ func scaleToRGBRange(value, min, max float64) int {
 	return int((value-min) * scaleFactor)
 }
 
-func CreatePPM(width, height, gridWidth, gridHeight int) {
-	fmt.Println("P3")
-	fmt.Printf("%d %d\n", width, height)
-	fmt.Println("255")
-
+func generateRandomUnitVectors(gridWidth, gridHeight int) [][]Vec2D {
 	gridNodeVectors := make([][]Vec2D, gridWidth+1)
 
 	for i := 0; i <= gridWidth; i++ {
@@ -78,9 +52,23 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 		}
 	}
 
-	pixelValues := make([][]string, width)
+	return gridNodeVectors
+}
+
+func CreatePPM(width, height, gridWidth, gridHeight int) {
+	fmt.Println("P3")
+	fmt.Printf("%d %d\n", width, height)
+	fmt.Println("255")
+
+	var seenFirstValue bool = false
+	var min float64
+	var max float64
+
+	gridNodeVectors := generateRandomUnitVectors(gridWidth, gridHeight)
+
+	pixelValues := make([][]float64, width)
 	for i := 0; i < width; i++ {
-		pixelValues[i] = make([]string, height)
+		pixelValues[i] = make([]float64, height)
 	}
 
 	for y := 0; y < gridHeight; y++ {
@@ -93,11 +81,21 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 			cellWidth := width/gridWidth
 			cellHeight := height/gridHeight
 
-			greyScaleValues := fillGridCell(tl, tr, bl, br, cellWidth, cellHeight)
+			pixelValuesInCell := fillGridCell(tl, tr, bl, br, cellWidth, cellHeight)
 			
 			for n := 0; n < cellHeight; n++ {
 				for m := 0; m < cellWidth; m++ {
-					pixelValues[x*cellWidth+m][y*cellHeight+n] = fmt.Sprintf("%d %d %d", greyScaleValues[m][n], greyScaleValues[m][n], greyScaleValues[m][n])
+					if !seenFirstValue {
+						min, max = pixelValuesInCell[m][n], pixelValuesInCell[m][n]
+						seenFirstValue = true
+					}
+					if pixelValuesInCell[m][n] < min {
+						min = pixelValuesInCell[m][n]
+					}
+					if pixelValuesInCell[m][n] > max {
+						max = pixelValuesInCell[m][n]
+					}
+					pixelValues[x*cellWidth+m][y*cellHeight+n] = pixelValuesInCell[m][n]
 				}
 			}
 		}
@@ -106,13 +104,14 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 	for j := 0; j < height; j++ {
 		var row []string
 		for i := 0; i < width; i++ {
-			row = append(row, pixelValues[i][j])
+			scaled := scaleToRGBRange(pixelValues[i][j], min, max)
+			row = append(row, fmt.Sprintf("%d %d %d", scaled, scaled, scaled))
 		}
 		fmt.Println(strings.Join(row, " "))
 	}
 }
 
-func fillPoint(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
+func bilinear(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
 	dotA := tl.dot(Vec2D{float64(x), float64(y)})
 	dotB := tr.dot(Vec2D{float64(x-width), float64(y)})
 	dotC := bl.dot(Vec2D{float64(x), float64(y-height)})
