@@ -19,17 +19,17 @@ func lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
-/*func smoothInterpolate(a, b, t float64) float64 {
+func smoothInterpolate(a, b, t float64) float64 {
 	rangeWidth := b-a
 	if rangeWidth == 0 {
 		return a
 	}
-	return hermite(t) * rangeWidth
+	return hermite(t) * rangeWidth + a
 }
 
 func hermite(t float64) float64 {
 	return 3 * t * t - 2 * t * t * t
-}*/
+}
 
 func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]float64 {
 	values := make([][]float64, cellWidth)
@@ -129,9 +129,9 @@ func getValueOfPoint(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
 	dotC := bl.dot(Vec2D{float64(x), float64(y-height)})
 	dotD := br.dot(Vec2D{float64(x-width), float64(y-height)})
 
-	top := lerp(dotA, dotB, float64(x)/float64(width))
-	bottom := lerp(dotC, dotD, float64(x)/float64(width))
-	final := lerp(top, bottom, float64(y)/float64(height))
+	top := smoothInterpolate(dotA, dotB, float64(x)/float64(width))
+	bottom := smoothInterpolate(dotC, dotD, float64(x)/float64(width))
+	final := smoothInterpolate(top, bottom, float64(y)/float64(height))
 
 	return final
 }
