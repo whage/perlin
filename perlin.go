@@ -19,6 +19,18 @@ func lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
+/*func smoothInterpolate(a, b, t float64) float64 {
+	rangeWidth := b-a
+	if rangeWidth == 0 {
+		return a
+	}
+	return hermite(t) * rangeWidth
+}
+
+func hermite(t float64) float64 {
+	return 3 * t * t - 2 * t * t * t
+}*/
+
 func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]float64 {
 	values := make([][]float64, cellWidth)
 
@@ -28,7 +40,7 @@ func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]float64 {
 
 	for y := 0; y < cellHeight; y++ {
 		for x := 0; x < cellWidth; x++ {
-			value := bilinear(tl, tr, bl, br, cellWidth, cellHeight, x, y)
+			value := getValueOfPoint(tl, tr, bl, br, cellWidth, cellHeight, x, y)
 			values[x][y] = value
 		}
 	}
@@ -111,15 +123,15 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 	}
 }
 
-func bilinear(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
+func getValueOfPoint(tl, tr, bl, br Vec2D, width, height, x, y int) float64 {
 	dotA := tl.dot(Vec2D{float64(x), float64(y)})
 	dotB := tr.dot(Vec2D{float64(x-width), float64(y)})
 	dotC := bl.dot(Vec2D{float64(x), float64(y-height)})
 	dotD := br.dot(Vec2D{float64(x-width), float64(y-height)})
 
-	lerpTop := lerp(dotA, dotB, float64(x)/float64(width))
-	lerpBottom := lerp(dotC, dotD, float64(x)/float64(width))
+	top := lerp(dotA, dotB, float64(x)/float64(width))
+	bottom := lerp(dotC, dotD, float64(x)/float64(width))
+	final := lerp(top, bottom, float64(y)/float64(height))
 
-	lerped := lerp(lerpTop, lerpBottom, float64(y)/float64(height))
-	return lerped
+	return final
 }
