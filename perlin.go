@@ -24,11 +24,16 @@ func smoothInterpolate(a, b, t float64) float64 {
 	if rangeWidth == 0 {
 		return a
 	}
-	return hermite(t) * rangeWidth + a
+	//return hermite(t) * rangeWidth + a
+	return fifthDegree(t) * rangeWidth + a
 }
 
 func hermite(t float64) float64 {
 	return 3 * t * t - 2 * t * t * t
+}
+
+func fifthDegree(t float64) float64 {
+	return 6*math.Pow(t,5) - 15*math.Pow(t, 4) + 10*math.Pow(t, 3)
 }
 
 func fillGridCell(tl, tr, bl, br Vec2D, cellWidth, cellHeight int) [][]float64 {
