@@ -11,6 +11,12 @@ type Vec2D struct {
 	X, Y float64
 }
 
+type PerlinNoise2DData struct {
+	noiseMap [][]float64
+	min float64
+	max float64
+}
+
 func (v Vec2D) dot(o Vec2D) float64 {
 	return v.X * o.X + v.Y * o.Y
 }
@@ -77,15 +83,28 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 	fmt.Printf("%d %d\n", width, height)
 	fmt.Println("255")
 
+	noiseData := Perlin(width, height, gridWidth, gridHeight)
+
+	for j := 0; j < height; j++ {
+		var row []string
+		for i := 0; i < width; i++ {
+			scaled := scaleToRGBRange(noiseData.noiseMap[i][j], noiseData.min, noiseData.max)
+			row = append(row, fmt.Sprintf("%d %d %d", scaled, scaled, scaled))
+		}
+		fmt.Println(strings.Join(row, " "))
+	}
+}
+
+func Perlin(width, height, gridWidth, gridHeight int) PerlinNoise2DData {
 	var seenFirstValue bool = false
 	var min float64
 	var max float64
 
 	gridNodeVectors := generateRandomUnitVectors(gridWidth, gridHeight)
 
-	pixelValues := make([][]float64, width)
+	noise2D := make([][]float64, width)
 	for i := 0; i < width; i++ {
-		pixelValues[i] = make([]float64, height)
+		noise2D[i] = make([]float64, height)
 	}
 
 	for y := 0; y < gridHeight; y++ {
@@ -112,19 +131,16 @@ func CreatePPM(width, height, gridWidth, gridHeight int) {
 					if pixelValuesInCell[m][n] > max {
 						max = pixelValuesInCell[m][n]
 					}
-					pixelValues[x*cellWidth+m][y*cellHeight+n] = pixelValuesInCell[m][n]
+					noise2D[x*cellWidth+m][y*cellHeight+n] = pixelValuesInCell[m][n]
 				}
 			}
 		}
 	}
 
-	for j := 0; j < height; j++ {
-		var row []string
-		for i := 0; i < width; i++ {
-			scaled := scaleToRGBRange(pixelValues[i][j], min, max)
-			row = append(row, fmt.Sprintf("%d %d %d", scaled, scaled, scaled))
-		}
-		fmt.Println(strings.Join(row, " "))
+	return PerlinNoise2DData{
+		noiseMap: noise2D,
+		min: min,
+		max: max,
 	}
 }
 
